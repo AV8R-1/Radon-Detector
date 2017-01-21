@@ -1,0 +1,314 @@
+EESchema Schematic File Version 2
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+EELAYER 25 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L CONN_02X05 P?
+U 1 1 5876EAE4
+P 1700 1850
+F 0 "P?" H 1700 2150 50  0000 C CNN
+F 1 "CONN_02X05" H 1700 1550 50  0000 C CNN
+F 2 "" H 1700 650 50  0000 C CNN
+F 3 "" H 1700 650 50  0000 C CNN
+	1    1700 1850
+	1    0    0    -1  
+$EndComp
+Text Notes 1100 1200 0    60   ~ 0
+5x2 connector to\nP1 on Pi, yellow\nwire on pin 1 of\n5x2 connector to\npin 1 on P1
+$Comp
+L CONN_01X04 P?
+U 1 1 5876EC72
+P 3450 2250
+F 0 "P?" H 3450 2500 50  0000 C CNN
+F 1 "CONN_01X04" V 3550 2250 50  0000 C CNN
+F 2 "" H 3450 2250 50  0000 C CNN
+F 3 "" H 3450 2250 50  0000 C CNN
+	1    3450 2250
+	1    0    0    -1  
+$EndComp
+$Comp
+L CONN_01X04 P?
+U 1 1 5876EC9F
+P 5200 2200
+F 0 "P?" H 5200 2450 50  0000 C CNN
+F 1 "CONN_01X04" V 5300 2200 50  0000 C CNN
+F 2 "" H 5200 2200 50  0000 C CNN
+F 3 "" H 5200 2200 50  0000 C CNN
+	1    5200 2200
+	-1   0    0    -1  
+$EndComp
+Wire Notes Line
+	3550 1900 5150 1900
+Wire Notes Line
+	5150 1900 5150 2550
+Wire Notes Line
+	5150 2550 3500 2550
+Wire Notes Line
+	3500 2550 3500 1900
+Wire Notes Line
+	3500 1900 4350 1900
+Text Notes 3650 2050 0    60   ~ 0
+WaveShare IO expander board
+Wire Notes Line
+	800  1450 2050 1450
+Wire Notes Line
+	2050 1450 2050 2950
+Wire Notes Line
+	2050 2950 2100 2950
+Text Notes 800  2550 0    60   ~ 0
+Raspberry Pi\nboard
+$Comp
+L CONN_01X05 P?
+U 1 1 5876ED88
+P 7100 2350
+F 0 "P?" H 7100 2650 50  0000 C CNN
+F 1 "CONN_01X05" V 7200 2350 50  0000 C CNN
+F 2 "" H 7100 2350 50  0000 C CNN
+F 3 "" H 7100 2350 50  0000 C CNN
+	1    7100 2350
+	1    0    0    -1  
+$EndComp
+Wire Notes Line
+	7150 1900 8550 1900
+Wire Notes Line
+	7150 1900 7150 3000
+Wire Notes Line
+	7150 3000 8550 3000
+Wire Notes Line
+	8550 3000 8550 1900
+Text Notes 7650 2100 0    60   ~ 0
+DS3231 rtc
+Text Notes 6750 1800 0    60   ~ 0
+Pin 1 marked +\n(yellow wire)
+Text Notes 5400 1750 0    60   ~ 0
+Pin 1 marked VCC\n(yellow wire)
+Text Notes 3150 1800 0    60   ~ 0
+Pin 1 marked VCC\n(yellow wire)
+$Comp
+L CONN_01X09 P?
+U 1 1 5876EE5A
+P 4300 2600
+F 0 "P?" H 4300 3100 50  0000 C CNN
+F 1 "CONN_01X09" V 4400 2600 50  0000 C CNN
+F 2 "" H 4300 2600 50  0000 C CNN
+F 3 "" H 4300 2600 50  0000 C CNN
+	1    4300 2600
+	0    -1   -1   0   
+$EndComp
+$Comp
+L LED D?
+U 1 1 5876EEF1
+P 3100 4200
+F 0 "D?" H 3100 4300 50  0000 C CNN
+F 1 "Grn 10mA" H 3100 4100 50  0000 C CNN
+F 2 "" H 3100 4200 50  0000 C CNN
+F 3 "" H 3100 4200 50  0000 C CNN
+	1    3100 4200
+	1    0    0    -1  
+$EndComp
+$Comp
+L LED D?
+U 1 1 5876EF50
+P 3100 4800
+F 0 "D?" H 3100 4900 50  0000 C CNN
+F 1 "Red 10mA" H 3100 4700 50  0000 C CNN
+F 2 "" H 3100 4800 50  0000 C CNN
+F 3 "" H 3100 4800 50  0000 C CNN
+	1    3100 4800
+	1    0    0    -1  
+$EndComp
+$Comp
+L LED D?
+U 1 1 5876EF75
+P 3100 5150
+F 0 "D?" H 3100 5250 50  0000 C CNN
+F 1 "Red 10mA" H 3100 5050 50  0000 C CNN
+F 2 "" H 3100 5150 50  0000 C CNN
+F 3 "" H 3100 5150 50  0000 C CNN
+	1    3100 5150
+	1    0    0    -1  
+$EndComp
+$Comp
+L LED D?
+U 1 1 5876EFDC
+P 3100 5550
+F 0 "D?" H 3100 5650 50  0000 C CNN
+F 1 "Red 10mA" H 3100 5450 50  0000 C CNN
+F 2 "" H 3100 5550 50  0000 C CNN
+F 3 "" H 3100 5550 50  0000 C CNN
+	1    3100 5550
+	1    0    0    -1  
+$EndComp
+$Comp
+L LED D?
+U 1 1 5876F0D5
+P 3100 5900
+F 0 "D?" H 3100 6000 50  0000 C CNN
+F 1 "Red 10mA" H 3100 5800 50  0000 C CNN
+F 2 "" H 3100 5900 50  0000 C CNN
+F 3 "" H 3100 5900 50  0000 C CNN
+	1    3100 5900
+	1    0    0    -1  
+$EndComp
+$Comp
+L LED D?
+U 1 1 5876F12A
+P 3100 6250
+F 0 "D?" H 3100 6350 50  0000 C CNN
+F 1 "Red 10mA" H 3100 6150 50  0000 C CNN
+F 2 "" H 3100 6250 50  0000 C CNN
+F 3 "" H 3100 6250 50  0000 C CNN
+	1    3100 6250
+	1    0    0    -1  
+$EndComp
+$Comp
+L LED D?
+U 1 1 5876F159
+P 3100 6600
+F 0 "D?" H 3100 6700 50  0000 C CNN
+F 1 "Red 10mA" H 3100 6500 50  0000 C CNN
+F 2 "" H 3100 6600 50  0000 C CNN
+F 3 "" H 3100 6600 50  0000 C CNN
+	1    3100 6600
+	1    0    0    -1  
+$EndComp
+$Comp
+L LED D?
+U 1 1 5876F48E
+P 3100 6950
+F 0 "D?" H 3100 7050 50  0000 C CNN
+F 1 "Red 10mA" H 3100 6850 50  0000 C CNN
+F 2 "" H 3100 6950 50  0000 C CNN
+F 3 "" H 3100 6950 50  0000 C CNN
+	1    3100 6950
+	1    0    0    -1  
+$EndComp
+$Comp
+L R R?
+U 1 1 5876FB79
+P 2750 4200
+F 0 "R?" V 2830 4200 50  0000 C CNN
+F 1 "820" V 2750 4200 50  0000 C CNN
+F 2 "" V 2680 4200 50  0000 C CNN
+F 3 "" H 2750 4200 50  0000 C CNN
+	1    2750 4200
+	0    1    1    0   
+$EndComp
+$Comp
+L R R?
+U 1 1 5876FBE9
+P 2750 4800
+F 0 "R?" V 2830 4800 50  0000 C CNN
+F 1 "820" V 2750 4800 50  0000 C CNN
+F 2 "" V 2680 4800 50  0000 C CNN
+F 3 "" H 2750 4800 50  0000 C CNN
+	1    2750 4800
+	0    1    1    0   
+$EndComp
+$Comp
+L R R?
+U 1 1 5876FF29
+P 2750 5150
+F 0 "R?" V 2830 5150 50  0000 C CNN
+F 1 "820" V 2750 5150 50  0000 C CNN
+F 2 "" V 2680 5150 50  0000 C CNN
+F 3 "" H 2750 5150 50  0000 C CNN
+	1    2750 5150
+	0    1    1    0   
+$EndComp
+$Comp
+L R R?
+U 1 1 5876FF6D
+P 2750 5550
+F 0 "R?" V 2830 5550 50  0000 C CNN
+F 1 "820" V 2750 5550 50  0000 C CNN
+F 2 "" V 2680 5550 50  0000 C CNN
+F 3 "" H 2750 5550 50  0000 C CNN
+	1    2750 5550
+	0    1    1    0   
+$EndComp
+$Comp
+L R R?
+U 1 1 5877011B
+P 2750 5900
+F 0 "R?" V 2830 5900 50  0000 C CNN
+F 1 "820" V 2750 5900 50  0000 C CNN
+F 2 "" V 2680 5900 50  0000 C CNN
+F 3 "" H 2750 5900 50  0000 C CNN
+	1    2750 5900
+	0    1    1    0   
+$EndComp
+$Comp
+L R R?
+U 1 1 58770167
+P 2750 6250
+F 0 "R?" V 2830 6250 50  0000 C CNN
+F 1 "820" V 2750 6250 50  0000 C CNN
+F 2 "" V 2680 6250 50  0000 C CNN
+F 3 "" H 2750 6250 50  0000 C CNN
+	1    2750 6250
+	0    1    1    0   
+$EndComp
+$Comp
+L R R?
+U 1 1 58770347
+P 2750 6600
+F 0 "R?" V 2830 6600 50  0000 C CNN
+F 1 "820" V 2750 6600 50  0000 C CNN
+F 2 "" V 2680 6600 50  0000 C CNN
+F 3 "" H 2750 6600 50  0000 C CNN
+	1    2750 6600
+	0    1    1    0   
+$EndComp
+$Comp
+L R R?
+U 1 1 5877039B
+P 2750 6950
+F 0 "R?" V 2830 6950 50  0000 C CNN
+F 1 "820" V 2750 6950 50  0000 C CNN
+F 2 "" V 2680 6950 50  0000 C CNN
+F 3 "" H 2750 6950 50  0000 C CNN
+	1    2750 6950
+	0    1    1    0   
+$EndComp
+$EndSCHEMATC
