@@ -98,7 +98,7 @@ void I2c8274::SetLevel(int level)
     int n;
     for (n = m_levelBase; n < m_levelBase + m_levelRange; n++)
     {
-        if (n < level) SetLEDState(n, LED_ON);
+        if (n < m_levelBase + level) SetLEDState(n, LED_ON);
         else
             SetLEDState(n, LED_OFF);
     }

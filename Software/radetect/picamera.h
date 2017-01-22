@@ -11,6 +11,9 @@
 ***/
 
 #include <QObject>
+#include <QList>
+
+#include "alphaevent.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,6 +72,12 @@ public:
     static void errno_exit(const char *s);
     static bool errno_return(const char *s);
     static const char * FourCCToStr( int fourCC, char *s );
+
+    static int READING_WINDOW; // Reading window in seconds, typically 86400 = 1 day
+    static QString VERSION;
+
+    static int badPix[];
+
 protected:
     bool open_device(void);
     void close_device(void);
@@ -81,6 +90,10 @@ protected:
     bool init_userp(unsigned int buffer_size);
     bool init_mmap(void);
     bool init_read(unsigned int buffer_size);
+
+private slots:
+    void EventDetected( int pixelCount );
+    void UpdateRate( bool trim = false );
 
 protected:
     char            *dev_name;
@@ -100,6 +113,8 @@ protected:
     int             m_busy; // Set non-zero while processing frame
     enum init_state m_initState; // Initialization state
     bool            m_dbgSaveFrameData; // Write each frame's raw data to disk
+    QList<alphaevent*> m_events;
+
 signals:
     void Done();
     void FatalError();

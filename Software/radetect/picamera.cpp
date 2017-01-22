@@ -1,5 +1,23 @@
 #include "picamera.h"
 
+// Duration of measurement window
+int PiCamera::READING_WINDOW = 86400;
+
+QString PiCamera::VERSION = "1.0.7";
+
+// Mask off unreliable pixels. These sometimes return false positives
+#define IMAGE_WIDTH 640
+#define IMAGE_HEIGHT    480
+#define BADPIXEL(x,y)   (y*IMAGE_WIDTH + x)
+int PiCamera::badPix[] = {
+    BADPIXEL(67,0),         // @67,0
+    BADPIXEL(61,479),       // @61,479
+    BADPIXEL(28,303),   // @28,303
+    BADPIXEL(0,116),    // @0,116
+    BADPIXEL(0,369),    // @0,369
+    BADPIXEL(631,479)   // @631,479
+};
+
 PiCamera::PiCamera(QObject *parent) : QObject(parent)
 {
     fd = -1;
@@ -13,6 +31,8 @@ PiCamera::PiCamera(QObject *parent) : QObject(parent)
     m_v4l2Code = 0;
     m_dbgSaveFrameData = false;
     m_missedFrames = 0;
+    printf( "radetect version %s\n", VERSION.toLocal8Bit().constData() );
+    ::fflush(stdout);
 }
 
 PiCamera::~PiCamera()
@@ -25,11 +45,13 @@ void PiCamera::Stop()
     if (m_initState < INIT_SHUTDOWN)
     {
         printf( "Stop requested\n" );
+        ::fflush(stdout);
         m_initState = INIT_SHUTDOWN;
     }
     else
     {
         printf( "Stop: already in state %d\n", static_cast<int>(m_initState) );
+        ::fflush(stdout);
     }
 }
 
@@ -62,12 +84,14 @@ void PiCamera::SetFormat(unsigned int v4l2_code)
 void PiCamera::errno_exit(const char *s)
 {
         fprintf(stderr, "%s error %d, %s\n", s, errno, strerror(errno));
+        ::fflush(stderr);
         exit(EXIT_FAILURE);
 }
 
 bool PiCamera::errno_return(const char *s)
 {
     fprintf( stderr, "%s error %d, %s\n", s, errno, strerror(errno) );
+    ::fflush(stderr);
     return false;
 }
 
@@ -89,9 +113,22 @@ void PiCamera::process_image(const void *p, int size)
         // m_height is height in pixels
         // Get min, max and look for outliers
         const unsigned char *b = (const unsigned char *)p;
+        if (frame_number == 1)
+        {
+            int n;
+            printf( "Bad pixel offsets:\n" );
+            for (n = 0; n < sizeof(badPix)/sizeof(badPix[0]); n++)
+            {
+                printf( "%u @%u,%u\n", badPix[n], badPix[n] / m_width, badPix[n] % m_width );
+            }
+            ::fflush(stdout);
+        }
+        // Force rate update once per minute
+        bool forceRateUpdate = (frame_number % (30 * 60) == 0);
         if (size <= m_width * m_height)
         {
             printf( "Short frame: expected %d, got %d\n", m_width * m_height + m_width * m_height / 2, size );
+            ::fflush(stdout);
         }
         else
         {
@@ -99,11 +136,10 @@ void PiCamera::process_image(const void *p, int size)
             // That's all we're interested in!
             unsigned char minV = 255;
             unsigned char maxV = 0;
-            int maxX = 0, maxY = 0;
+            int maxX = 0, maxY = 0, maxOff = 0;
             int pixel;
-            // Mask off unreliable pixels. These sometimes return false positives
-            int badPix[] = { 0*m_width + 67, 303*m_width + 28, 479*m_width + 631 };
             int n;
+            int overThresholdCount = 0;
             for (pixel = 0; pixel < m_width * m_height; pixel++)
             {
                 if (b[pixel] < minV) minV = b[pixel];
@@ -118,16 +154,27 @@ void PiCamera::process_image(const void *p, int size)
                     maxV = b[pixel];
                     maxY = pixel / m_width;
                     maxX = pixel % m_width;
+                    maxOff = pixel;
+                    if (maxV > 27)
+                    {
+                        overThresholdCount++;
+                    }
                 }
             }
             // FIXME make threshold configurable
             // FIXME calculate peak altitude
-            if (maxV > 26)
+            if (overThresholdCount > 0)
             {
                 // FIXME record position of last max
-                printf( "Max pixel %u detected at [%d]@%d,%d\n",  maxV, frame_number, maxX, maxY );
+                printf( "%s\tMax pixel %u detected at [%d]@%d,%d off %d (total %d)\n",
+                        QDateTime::currentDateTime().toString("ddd yyyy-MM-dd HH:mm:ss.zzz").toLocal8Bit().constData(),
+                        maxV, frame_number, maxX, maxY, maxOff, overThresholdCount );
+                ::fflush(stdout);
                 //printf( "(bp = %d,%d, pix=%d)\n", badPix[0], badPix[1], maxY * m_width + maxX );
-                emit Alarm( 2 );
+                //emit Alarm( 2 );
+                EventDetected( overThresholdCount );
+                UpdateRate( forceRateUpdate );
+                forceRateUpdate = false;
             }
         }
         if (m_dbgSaveFrameData)
@@ -141,6 +188,12 @@ void PiCamera::process_image(const void *p, int size)
 
         fflush(fp);
         fclose(fp);
+        }
+        if (forceRateUpdate)
+        {
+            // Trim off events that have passed collection window, and update with events that have
+            // dropped off the last hour window
+            UpdateRate( true );
         }
 }
 
@@ -275,6 +328,7 @@ static void mainloop(void)
 
                         if (0 == r) {
                                 fprintf(stderr, "select timeout\n");
+                                ::fflush(stderr);
                                 exit(EXIT_FAILURE);
                         }
 
@@ -383,6 +437,7 @@ bool PiCamera::init_read(unsigned int buffer_size)
 
         if (!buffers) {
                 fprintf(stderr, "Out of memory\n");
+                ::fflush(stderr);
                 return false;
         }
 
@@ -391,6 +446,7 @@ bool PiCamera::init_read(unsigned int buffer_size)
 
         if (!buffers[0].start) {
                 fprintf(stderr, "Out of memory\n");
+                ::fflush(stderr);
                 return false;
         }
         return true;
@@ -410,6 +466,7 @@ bool PiCamera::init_mmap(void)
                 if (EINVAL == errno) {
                         fprintf(stderr, "%s does not support "
                                  "memory mapping\n", dev_name);
+                        ::fflush(stderr);
                         return false;
                 } else {
                         return errno_return("VIDIOC_REQBUFS");
@@ -419,6 +476,7 @@ bool PiCamera::init_mmap(void)
         if (req.count < 2) {
                 fprintf(stderr, "Insufficient buffer memory on %s\n",
                          dev_name);
+                ::fflush(stderr);
                 return false;
         }
 
@@ -426,6 +484,7 @@ bool PiCamera::init_mmap(void)
 
         if (!buffers) {
                 fprintf(stderr, "Out of memory\n");
+                ::fflush(stderr);
                 return false;
         }
 
@@ -469,6 +528,7 @@ bool PiCamera::init_userp(unsigned int buffer_size)
                 if (EINVAL == errno) {
                         fprintf(stderr, "%s does not support "
                                  "user pointer i/o\n", dev_name);
+                        ::fflush(stderr);
                         return false;
                 } else {
                         return errno_return("VIDIOC_REQBUFS");
@@ -479,6 +539,7 @@ bool PiCamera::init_userp(unsigned int buffer_size)
 
         if (!buffers) {
                 fprintf(stderr, "Out of memory\n");
+                ::fflush(stderr);
                 return false;
         }
 
@@ -488,6 +549,7 @@ bool PiCamera::init_userp(unsigned int buffer_size)
 
                 if (!buffers[n_buffers].start) {
                         fprintf(stderr, "Out of memory\n");
+                        ::fflush(stderr);
                         return false;
                 }
         }
@@ -506,6 +568,7 @@ bool PiCamera::init_device(void)
                 if (EINVAL == errno) {
                         fprintf(stderr, "%s is no V4L2 device\n",
                                  dev_name);
+                        ::fflush(stderr);
                         return false;
                 } else {
                         return errno_return("VIDIOC_QUERYCAP");
@@ -515,6 +578,7 @@ bool PiCamera::init_device(void)
         if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
                 fprintf(stderr, "%s is no video capture device\n",
                          dev_name);
+                ::fflush(stderr);
                 return false;
         }
 
@@ -523,6 +587,7 @@ bool PiCamera::init_device(void)
                 if (!(cap.capabilities & V4L2_CAP_READWRITE)) {
                         fprintf(stderr, "%s does not support read i/o\n",
                                  dev_name);
+                        ::fflush(stderr);
                         return false;
                 }
                 break;
@@ -532,6 +597,7 @@ bool PiCamera::init_device(void)
                 if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
                         fprintf(stderr, "%s does not support streaming i/o\n",
                                  dev_name);
+                        ::fflush(stderr);
                         return false;
                 }
                 break;
@@ -574,6 +640,7 @@ bool PiCamera::init_device(void)
                 fmt.fmt.pix.height      = 480; //replace
                 fmt.fmt.pix.pixelformat = m_v4l2Code; //V4L2_PIX_FMT_H264; //replace
                 fmt.fmt.pix.field       = V4L2_FIELD_ANY;
+                ::fflush(stderr);
 
                 if (-1 == xioctl(fd, VIDIOC_S_FMT, &fmt))
                         return errno_return("VIDIOC_S_FMT");
@@ -598,6 +665,7 @@ bool PiCamera::init_device(void)
 
         char pixfmt_4cc[64];
         printf( "Format: %dX%d (%d bytes per line, %d total, pixfmt=%s)\n", fmt.fmt.pix.width, fmt.fmt.pix.height, fmt.fmt.pix.bytesperline, fmt.fmt.pix.sizeimage, FourCCToStr(fmt.fmt.pix.pixelformat, pixfmt_4cc) );
+        ::fflush(stdout);
 
         switch (io) {
         case IO_METHOD_READ:
@@ -630,11 +698,13 @@ bool PiCamera::open_device(void)
         if (-1 == stat(dev_name, &st)) {
                 fprintf(stderr, "Cannot identify '%s': %d, %s\n",
                          dev_name, errno, strerror(errno));
+                ::fflush(stderr);
                 return false;
         }
 
         if (!S_ISCHR(st.st_mode)) {
                 fprintf(stderr, "%s is no device\n", dev_name);
+                ::fflush(stderr);
                 return false;
         }
 
@@ -643,6 +713,7 @@ bool PiCamera::open_device(void)
         if (-1 == fd) {
                 fprintf(stderr, "Cannot open '%s': %d, %s\n",
                          dev_name, errno, strerror(errno));
+                ::fflush(stderr);
                 return false;
         }
         return true;
@@ -769,6 +840,9 @@ void PiCamera::ProcessFrame()
     switch (m_initState)
     {
     case INIT_START:
+        printf( "radetect v%s\n", VERSION.toLocal8Bit().constData());
+        ::fflush(stdout);
+        emit Alarm(0);
         if (!open_device())
         {
             m_initState = INIT_OPEN_FAILED;
@@ -777,10 +851,12 @@ void PiCamera::ProcessFrame()
             return;
         }
         m_initState = INIT_OPEN_SUCCESS;
-        printf( "Device opened\n" );
+        printf( "Device opened successfully\n" );
+        ::fflush(stdout);
         m_busy = 0;
         return;
     case INIT_OPEN_SUCCESS:
+        emit Alarm(1);
         if (!init_device())
         {
             m_initState = INIT_DEVINIT_FAILED;
@@ -789,6 +865,7 @@ void PiCamera::ProcessFrame()
         }
         m_initState = INIT_DEVINIT_SUCCESS;
         printf( "Device initialized\n" );
+        ::fflush(stdout);
         m_busy = 0;
         return;
     case INIT_DEVINIT_FAILED:
@@ -797,6 +874,7 @@ void PiCamera::ProcessFrame()
         emit FatalError();
         return;
     case INIT_DEVINIT_SUCCESS:
+        emit Alarm(2);
         if (!start_capturing())
         {
             m_initState = INIT_STARTCAP_FAILED;
@@ -805,6 +883,8 @@ void PiCamera::ProcessFrame()
         }
         m_initState = INIT_STARTCAP_SUCCESS;
         printf( "Capture started\n" );
+        ::fflush(stdout);
+        emit Alarm(0);
         m_busy = 0;
         return;
     case INIT_STARTCAP_FAILED:
@@ -816,12 +896,16 @@ void PiCamera::ProcessFrame()
         break;
     case INIT_SHUTDOWN:
         printf( "Shutting down...\n" );
+        ::fflush(stdout);
         stop_capturing();
         printf( "Capture stopped, total frames %d (missed %d)\n", frame_number, m_missedFrames );
+        ::fflush(stdout);
         uninit_device();
         printf( "Device uninitialized\n" );
+        ::fflush(stdout);
         close_device();
         printf( "Device closed\n" );
+        ::fflush(stdout);
         m_busy = 0;
         m_initState = INIT_END;
         return;
@@ -881,4 +965,50 @@ const char * PiCamera::FourCCToStr(int fourCC, char *s)
     s[3] = (fourCC & 0x000000ff) >> 0;
     s[4] = '\0';
     return s;
+}
+
+void PiCamera::EventDetected(int pixelCount)
+{
+    m_events.push_back(new alphaevent(pixelCount));
+}
+
+void PiCamera::UpdateRate( bool trim )
+{
+    QDateTime now = QDateTime::currentDateTime();
+    qint64 nowMillis = now.toMSecsSinceEpoch();
+    int numberRemoved = 0;
+    int n;
+    if (trim)
+    {
+        qint64 elapsedMillis;
+        int startingCount = m_events.count();
+        for (n = 0; n < startingCount; n++)
+        {
+            elapsedMillis = nowMillis - m_events.first()->Time().toMSecsSinceEpoch();
+            if (elapsedMillis / 1000LL < PiCamera::READING_WINDOW) break;
+            alphaevent * a = m_events.takeFirst();
+            numberRemoved++;
+            delete a;
+        }
+    }
+    // Read the events and count the number in the past hour
+    int lastHourCount = 0;
+    for (n = m_events.count(); n > 0; n--)
+    {
+        qint64 elapsedMillis = nowMillis - m_events.last()->Time().toMSecsSinceEpoch();
+        if (elapsedMillis > 3600 * 1000LL)
+            break;
+        lastHourCount++;
+    }
+    if (trim)
+    {
+        if (numberRemoved) printf( "UpdateRate(true): removed %d events, last hour %d/%d\n", numberRemoved, lastHourCount, m_events.count() );
+    }
+    else
+    {
+        if (lastHourCount || m_events.count()) printf( "UpdateRate(false): last hour %d/%d\n", lastHourCount, m_events.count() );
+    }
+    ::fflush( stdout );
+    // Update LEDs
+    emit Alarm( lastHourCount );
 }

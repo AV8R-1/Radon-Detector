@@ -19,14 +19,17 @@ void signal_handler( int arg )
         break;
     case SIGUSR1:
         printf( "Got SIGUSR1\n" );
+        ::fflush(stdout);
         if (g_c) g_c->SetSaveFrames(true);
         break;
     case SIGUSR2:
         printf( "Got SIGUSR2\n" );
+        ::fflush(stdout);
         if (g_c) g_c->SetSaveFrames(false);
         break;
     case SIGHUP:
         printf( "Got SIGHUP, saving 4-5 frames\n" );
+        ::fflush(stdout);
         if (g_c)
         {
             g_c->SetSaveFrames(true);
@@ -35,6 +38,7 @@ void signal_handler( int arg )
         break;
     default:
         printf( "Unhandled signal %d\n", arg );
+        ::fflush(stdout);
         break;
     }
 }
@@ -108,7 +112,10 @@ int main(int argc, char *argv[])
     // Start initialization from timer
     QObject::connect( &frameEvent, SIGNAL(timeout()), &c, SLOT(ProcessFrame()) );
     // Fire at frame rate of 30 frames per second
-    frameEvent.setInterval( 1000 / 30 );
+    int fps = 30;
+    frameEvent.setInterval( 1000 / fps );
+    printf( "Starting picamera v%s at %d fps\n", PiCamera::VERSION.toLocal8Bit().constData(), fps );
+    ::fflush(stdout);
     frameEvent.start();
 
     return a.exec();
